@@ -41,7 +41,7 @@ export default function HexagonalMap({
     const adjustedHexSize = regionNames.length > 100 ? 15 : hexSize;
     setActualHexSize(adjustedHexSize);
 
-    const grid = generateHexGrid(regionNames, adjustedHexSize);
+    const grid = generateHexGrid(regionNames, adjustedHexSize, data);
     setHexGrid(grid);
   }, [data, hexSize]);
 

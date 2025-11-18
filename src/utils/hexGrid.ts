@@ -22,37 +22,103 @@ const SIDO_HEX_LAYOUT: Record<string, { q: number; r: number }> = {
   '제주특별자치도': { q: 0, r: 7 },
 };
 
-export function generateHexGrid(regionNames: string[], hexSize: number = 50): HexCell[] {
+export function generateHexGrid(
+  regionNames: string[],
+  hexSize: number = 50,
+  geoData?: any
+): HexCell[] {
   const cells: HexCell[] = [];
   const sqrt3 = Math.sqrt(3);
 
-  regionNames.forEach((name, index) => {
-    // Try to find a predefined position
-    let coords = SIDO_HEX_LAYOUT[name];
+  // If we have geographic data, use it to position hexagons
+  if (geoData && regionNames.length > 20) {
+    // For sigungu level, use a compact geographic-based layout
+    const minLat = 33.0, maxLat = 38.6;
+    const minLon = 124.5, maxLon = 131.0;
+    const latRange = maxLat - minLat;
+    const lonRange = maxLon - minLon;
 
-    // If not found (e.g., for sigungu), auto-generate grid position
-    if (!coords) {
-      const cols = Math.ceil(Math.sqrt(regionNames.length));
-      const q = index % cols;
-      const r = Math.floor(index / cols);
-      coords = { q, r };
-    }
+    regionNames.forEach((name) => {
+      const feature = geoData.features.find((f: any) =>
+        f.properties.SIG_KOR_NM === name ||
+        f.properties.CTP_KOR_NM === name ||
+        f.properties.name === name
+      );
 
-    const { q, r } = coords;
+      if (feature && feature.geometry) {
+        // Calculate centroid
+        let centroid = [127.5, 36.5]; // default center of Korea
+        if (feature.geometry.type === 'Polygon') {
+          const coords = feature.geometry.coordinates[0];
+          let sumLon = 0, sumLat = 0;
+          coords.forEach((coord: number[]) => {
+            sumLon += coord[0];
+            sumLat += coord[1];
+          });
+          centroid = [sumLon / coords.length, sumLat / coords.length];
+        } else if (feature.geometry.type === 'MultiPolygon') {
+          const coords = feature.geometry.coordinates[0][0];
+          let sumLon = 0, sumLat = 0;
+          coords.forEach((coord: number[]) => {
+            sumLon += coord[0];
+            sumLat += coord[1];
+          });
+          centroid = [sumLon / coords.length, sumLat / coords.length];
+        }
 
-    // Convert axial coordinates to pixel coordinates
-    const x = hexSize * (sqrt3 * q + (sqrt3 / 2) * r);
-    const y = hexSize * ((3 / 2) * r);
+        // Map geographic coordinates to hexagonal grid
+        const normalizedLon = (centroid[0] - minLon) / lonRange;
+        const normalizedLat = (centroid[1] - minLat) / latRange;
 
-    cells.push({
-      q,
-      r,
-      regionCode: name,
-      regionName: name,
-      x,
-      y,
+        // Scale to pixel space (adjust multiplier for density)
+        const x = normalizedLon * hexSize * 30;
+        const y = (1 - normalizedLat) * hexSize * 20; // Invert Y for screen coordinates
+
+        const code = feature.properties.CTPRVN_CD ||
+                    feature.properties.SIG_CD ||
+                    feature.properties.code ||
+                    name;
+
+        cells.push({
+          q: 0, // Not used for geo-based layout
+          r: 0,
+          regionCode: code,
+          regionName: name,
+          x,
+          y,
+        });
+      }
     });
-  });
+  } else {
+    // Use predefined layout for sido level
+    regionNames.forEach((name, index) => {
+      // Try to find a predefined position
+      let coords = SIDO_HEX_LAYOUT[name];
+
+      // If not found, auto-generate grid position
+      if (!coords) {
+        const cols = Math.ceil(Math.sqrt(regionNames.length));
+        const q = index % cols;
+        const r = Math.floor(index / cols);
+        coords = { q, r };
+      }
+
+      const { q, r } = coords;
+
+      // Convert axial coordinates to pixel coordinates
+      const x = hexSize * (sqrt3 * q + (sqrt3 / 2) * r);
+      const y = hexSize * ((3 / 2) * r);
+
+      cells.push({
+        q,
+        r,
+        regionCode: name,
+        regionName: name,
+        x,
+        y,
+      });
+    });
+  }
 
   return cells;
 }
