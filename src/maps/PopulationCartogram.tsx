@@ -58,10 +58,10 @@ export default function PopulationCartogram({
     const svg = d3.select(svgRef.current);
     const g = svg.append('g');
 
-    // Create projection for Korea
+    // Create projection for Korea (centered to include Jeju Island)
     const projection = d3.geoMercator()
-      .center([127.5, 36.5])
-      .scale(5000)
+      .center([127.5, 36.0])
+      .scale(4500)
       .translate([width / 2, height / 2]);
 
     const path = d3.geoPath().projection(projection);
