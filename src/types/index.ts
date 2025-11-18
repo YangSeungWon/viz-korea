@@ -46,3 +46,30 @@ export interface HexCell {
 }
 
 export type AdminLevel = 'sido' | 'sigungu' | 'eupmyeondong';
+
+// Quiz types
+export type QuizMode = 'find-region' | 'name-quiz' | 'time-attack' | 'practice';
+
+export interface QuizQuestion {
+  regionCode: string;
+  regionName: string;
+  options?: string[]; // For multiple choice
+}
+
+export interface QuizState {
+  mode: QuizMode;
+  adminLevel: AdminLevel;
+  currentQuestion: number;
+  totalQuestions: number;
+  score: number;
+  questions: QuizQuestion[];
+  answers: Array<{
+    question: QuizQuestion;
+    userAnswer: string;
+    correct: boolean;
+    timeSpent?: number;
+  }>;
+  timeLimit?: number; // seconds
+  timeRemaining?: number;
+  isComplete: boolean;
+}
