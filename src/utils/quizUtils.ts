@@ -31,25 +31,3 @@ export function generateMultipleChoiceOptions(
   return options.sort(() => Math.random() - 0.5);
 }
 
-export function calculateDistance(
-  clickedRegion: string,
-  correctRegion: string,
-  _geoData: RegionCollection
-): number {
-  // For now, just return 0 if correct, 100 if wrong
-  // TODO: Calculate actual geographic distance
-  return clickedRegion === correctRegion ? 0 : 100;
-}
-
-export function calculateScore(
-  distance: number,
-  maxDistance: number = 100
-): number {
-  // Score from 0-100 based on distance
-  // Perfect click = 100 points
-  // Maximum distance = 0 points
-  if (distance === 0) return 100;
-  if (distance >= maxDistance) return 0;
-
-  return Math.round(100 * (1 - distance / maxDistance));
-}

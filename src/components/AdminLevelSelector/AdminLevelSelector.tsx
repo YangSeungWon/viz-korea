@@ -15,7 +15,7 @@ export default function AdminLevelSelector({ currentLevel, onLevelChange }: Admi
     {
       value: 'sigungu',
       label: '시군구',
-      description: '기초자치단체 (226개)'
+      description: '기초자치단체 (250개)'
     },
   ];
 
