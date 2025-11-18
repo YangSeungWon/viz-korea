@@ -27,6 +27,7 @@ export default function HexagonalMap({
 }: HexagonalMapProps) {
   const svgRef = useRef<SVGSVGElement>(null);
   const [hexGrid, setHexGrid] = useState<HexCell[]>([]);
+  const [actualHexSize, setActualHexSize] = useState(hexSize);
 
   useEffect(() => {
     if (!data) return;
@@ -38,6 +39,7 @@ export default function HexagonalMap({
 
     // Adjust hex size based on number of regions
     const adjustedHexSize = regionNames.length > 100 ? 15 : hexSize;
+    setActualHexSize(adjustedHexSize);
 
     const grid = generateHexGrid(regionNames, adjustedHexSize);
     setHexGrid(grid);
@@ -83,7 +85,7 @@ export default function HexagonalMap({
     g.selectAll('polygon')
       .data(hexGrid)
       .join('polygon')
-      .attr('points', d => hexCorners(d.x + centerX, d.y + centerY, hexSize))
+      .attr('points', d => hexCorners(d.x + centerX, d.y + centerY, actualHexSize))
       .attr('fill', (d) => {
         if (!colorScale) return '#e0e0e0';
         const value = valueMap.get(d.regionCode) || valueMap.get(d.regionName);
@@ -149,7 +151,7 @@ export default function HexagonalMap({
 
     svg.call(zoom as any);
 
-  }, [hexGrid, visualizationData, width, height, colorScheme, hexSize, onRegionClick, onRegionHover]);
+  }, [hexGrid, visualizationData, width, height, colorScheme, actualHexSize, onRegionClick, onRegionHover]);
 
   return (
     <svg
