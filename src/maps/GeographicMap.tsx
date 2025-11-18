@@ -65,37 +65,37 @@ export default function GeographicMap({
       .attr('d', path as any)
       .attr('fill', (d) => {
         if (!colorScale) return '#e0e0e0';
-        const code = d.properties.CTPRVN_CD || d.properties.code;
-        const name = d.properties.CTP_KOR_NM || d.properties.name;
+        const code = d.properties.CTPRVN_CD || d.properties.SIG_CD || d.properties.code;
+        const name = d.properties.CTP_KOR_NM || d.properties.SIG_KOR_NM || d.properties.name;
         const value = valueMap.get(code) || valueMap.get(name);
         return value !== undefined ? colorScale(value) : '#e0e0e0';
       })
       .attr('stroke', '#333')
-      .attr('stroke-width', 1)
+      .attr('stroke-width', 0.5)
       .style('cursor', 'pointer')
       .on('click', (_, d) => {
-        const code = d.properties.CTPRVN_CD || d.properties.code;
+        const code = d.properties.CTPRVN_CD || d.properties.SIG_CD || d.properties.code;
         if (onRegionClick) onRegionClick(code);
       })
       .on('mouseenter', (event, d) => {
         d3.select(event.currentTarget)
           .attr('stroke', '#000')
-          .attr('stroke-width', 2);
+          .attr('stroke-width', 1.5);
 
-        const code = d.properties.CTPRVN_CD || d.properties.code;
+        const code = d.properties.CTPRVN_CD || d.properties.SIG_CD || d.properties.code;
         if (onRegionHover) onRegionHover(code);
       })
       .on('mouseleave', (event) => {
         d3.select(event.currentTarget)
           .attr('stroke', '#333')
-          .attr('stroke-width', 1);
+          .attr('stroke-width', 0.5);
 
         if (onRegionHover) onRegionHover(null);
       })
       .append('title')
       .text((d) => {
-        const name = d.properties.CTP_KOR_NM || d.properties.name;
-        const code = d.properties.CTPRVN_CD || d.properties.code;
+        const name = d.properties.CTP_KOR_NM || d.properties.SIG_KOR_NM || d.properties.name;
+        const code = d.properties.CTPRVN_CD || d.properties.SIG_CD || d.properties.code;
         const value = valueMap.get(code) || valueMap.get(name);
         return value !== undefined ? `${name}: ${value}` : name;
       });

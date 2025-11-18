@@ -33,10 +33,13 @@ export default function HexagonalMap({
 
     // Extract region names
     const regionNames = data.features.map(f =>
-      f.properties.CTP_KOR_NM || f.properties.name
+      f.properties.CTP_KOR_NM || f.properties.SIG_KOR_NM || f.properties.name
     );
 
-    const grid = generateHexGrid(regionNames, hexSize);
+    // Adjust hex size based on number of regions
+    const adjustedHexSize = regionNames.length > 100 ? 15 : hexSize;
+
+    const grid = generateHexGrid(regionNames, adjustedHexSize);
     setHexGrid(grid);
   }, [data, hexSize]);
 
@@ -112,28 +115,30 @@ export default function HexagonalMap({
         return value !== undefined ? `${d.regionName}: ${value}` : d.regionName;
       });
 
-    // Add labels
-    g.selectAll('text')
-      .data(hexGrid)
-      .join('text')
-      .attr('x', d => d.x + centerX)
-      .attr('y', d => d.y + centerY)
-      .attr('text-anchor', 'middle')
-      .attr('dominant-baseline', 'middle')
-      .style('font-size', '12px')
-      .style('font-weight', 'bold')
-      .style('fill', '#333')
-      .style('pointer-events', 'none')
-      .text(d => {
-        // Shorten labels for better display
-        const name = d.regionName;
-        if (name.includes('특별시')) return name.replace('특별시', '');
-        if (name.includes('광역시')) return name.replace('광역시', '');
-        if (name.includes('특별자치시')) return name.replace('특별자치시', '');
-        if (name.includes('특별자치도')) return name.replace('특별자치도', '');
-        if (name.includes('도')) return name.replace('도', '');
-        return name;
-      });
+    // Add labels (only for sido level or larger hexagons)
+    if (hexGrid.length <= 20) {
+      g.selectAll('text')
+        .data(hexGrid)
+        .join('text')
+        .attr('x', d => d.x + centerX)
+        .attr('y', d => d.y + centerY)
+        .attr('text-anchor', 'middle')
+        .attr('dominant-baseline', 'middle')
+        .style('font-size', '12px')
+        .style('font-weight', 'bold')
+        .style('fill', '#333')
+        .style('pointer-events', 'none')
+        .text(d => {
+          // Shorten labels for better display
+          const name = d.regionName;
+          if (name.includes('특별시')) return name.replace('특별시', '');
+          if (name.includes('광역시')) return name.replace('광역시', '');
+          if (name.includes('특별자치시')) return name.replace('특별자치시', '');
+          if (name.includes('특별자치도')) return name.replace('특별자치도', '');
+          if (name.includes('도')) return name.replace('도', '');
+          return name;
+        });
+    }
 
     // Add zoom behavior
     const zoom = d3.zoom<SVGSVGElement, unknown>()

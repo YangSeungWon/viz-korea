@@ -26,9 +26,18 @@ export function generateHexGrid(regionNames: string[], hexSize: number = 50): He
   const cells: HexCell[] = [];
   const sqrt3 = Math.sqrt(3);
 
-  regionNames.forEach((name) => {
-    // Try to find a predefined position, otherwise assign a default
-    const coords = SIDO_HEX_LAYOUT[name] || { q: 0, r: 0 };
+  regionNames.forEach((name, index) => {
+    // Try to find a predefined position
+    let coords = SIDO_HEX_LAYOUT[name];
+
+    // If not found (e.g., for sigungu), auto-generate grid position
+    if (!coords) {
+      const cols = Math.ceil(Math.sqrt(regionNames.length));
+      const q = index % cols;
+      const r = Math.floor(index / cols);
+      coords = { q, r };
+    }
+
     const { q, r } = coords;
 
     // Convert axial coordinates to pixel coordinates

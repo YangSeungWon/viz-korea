@@ -2,19 +2,21 @@ import { useState } from 'react';
 import { useMapData } from './hooks/useMapData';
 import MapViewer from './components/MapViewer/MapViewer';
 import BaseMapSelector from './components/BaseMapSelector/BaseMapSelector';
+import AdminLevelSelector from './components/AdminLevelSelector/AdminLevelSelector';
 import DataUploader from './components/DataUploader/DataUploader';
 import Legend from './components/Legend/Legend';
-import type { BaseMapType, VisualizationData } from './types';
+import type { BaseMapType, VisualizationData, AdminLevel } from './types';
 
 // Import sample data
 import sampleData from './data/sampleData';
 
 function App() {
+  const [adminLevel, setAdminLevel] = useState<AdminLevel>('sido');
   const [baseMapType, setBaseMapType] = useState<BaseMapType>('geographic');
   const [visualizationData, setVisualizationData] = useState<VisualizationData | null>(null);
   const [colorScheme, setColorScheme] = useState<string>('blues');
 
-  const { data: geoData, loading, error } = useMapData('sido');
+  const { data: geoData, loading, error } = useMapData(adminLevel);
 
   const handleDataLoad = (data: VisualizationData) => {
     setVisualizationData(data);
@@ -66,6 +68,11 @@ function App() {
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           {/* Sidebar */}
           <div className="lg:col-span-1 space-y-4">
+            <AdminLevelSelector
+              currentLevel={adminLevel}
+              onLevelChange={setAdminLevel}
+            />
+
             <BaseMapSelector
               currentMap={baseMapType}
               onMapChange={setBaseMapType}
