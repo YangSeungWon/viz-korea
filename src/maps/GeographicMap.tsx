@@ -11,6 +11,7 @@ interface GeographicMapProps {
   width?: number;
   height?: number;
   colorScheme?: string;
+  highlightRegion?: string;
 }
 
 export default function GeographicMap({
@@ -21,6 +22,7 @@ export default function GeographicMap({
   width = 800,
   height = 600,
   colorScheme = 'blues',
+  highlightRegion,
 }: GeographicMapProps) {
   const svgRef = useRef<SVGSVGElement>(null);
 
@@ -109,7 +111,34 @@ export default function GeographicMap({
 
     svg.call(zoom as any);
 
-  }, [data, visualizationData, width, height, colorScheme, onRegionClick, onRegionHover]);
+    // Highlight region with blinking animation
+    if (highlightRegion) {
+      g.selectAll('path')
+        .filter((d: any) => {
+          const code = d.properties.CTPRVN_CD || d.properties.SIG_CD || d.properties.code;
+          const name = d.properties.CTP_KOR_NM || d.properties.SIG_KOR_NM || d.properties.name;
+          return code === highlightRegion || name === highlightRegion;
+        })
+        .style('animation', 'blink 0.8s ease-in-out infinite')
+        .attr('fill', '#ff4444')
+        .attr('stroke', '#cc0000')
+        .attr('stroke-width', 3);
+
+      // Add CSS animation
+      const style = document.createElement('style');
+      style.textContent = `
+        @keyframes blink {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.4; }
+        }
+      `;
+      if (!document.querySelector('style[data-blink]')) {
+        style.setAttribute('data-blink', 'true');
+        document.head.appendChild(style);
+      }
+    }
+
+  }, [data, visualizationData, width, height, colorScheme, onRegionClick, onRegionHover, highlightRegion]);
 
   return (
     <svg
