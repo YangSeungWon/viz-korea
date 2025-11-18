@@ -18,16 +18,18 @@ export function createDorlingCartogram(
 ): RegionCollection {
   const { scaleFactor = 1 } = options;
 
-  // Create a map of region codes to values
+  // Create a map of region codes and names to values
   const valueMap = new Map<string, number>();
   data.forEach(d => {
     valueMap.set(d.regionCode, d.value);
+    valueMap.set(d.regionName, d.value);
   });
 
   // Calculate radius for each region based on value
   const features = geojson.features.map(feature => {
-    const regionCode = feature.properties.code || feature.properties.name;
-    const value = valueMap.get(regionCode) || 0;
+    const code = feature.properties.CTPRVN_CD || feature.properties.SIG_CD || feature.properties.code;
+    const name = feature.properties.CTP_KOR_NM || feature.properties.SIG_KOR_NM || feature.properties.name;
+    const value = valueMap.get(code) || valueMap.get(name) || 0;
 
     // Calculate centroid
     const centroid = turf.centroid(feature);
@@ -68,12 +70,13 @@ export function createScaledCartogram(
 ): RegionCollection {
   const { scaleFactor: _scaleFactor = 0.01 } = options;
 
-  // Create a map of region codes to values
+  // Create a map of region codes and names to values
   const valueMap = new Map<string, number>();
   const values: number[] = [];
 
   data.forEach(d => {
     valueMap.set(d.regionCode, d.value);
+    valueMap.set(d.regionName, d.value);
     values.push(d.value);
   });
 
@@ -81,8 +84,9 @@ export function createScaledCartogram(
   const avgValue = values.reduce((a, b) => a + b, 0) / values.length;
 
   const features = geojson.features.map(feature => {
-    const regionCode = feature.properties.code || feature.properties.name;
-    const value = valueMap.get(regionCode) || avgValue;
+    const code = feature.properties.CTPRVN_CD || feature.properties.SIG_CD || feature.properties.code;
+    const name = feature.properties.CTP_KOR_NM || feature.properties.SIG_KOR_NM || feature.properties.name;
+    const value = valueMap.get(code) || valueMap.get(name) || avgValue;
 
     // Calculate scale factor (regions with higher values get bigger)
     const scale = Math.sqrt(value / avgValue);
