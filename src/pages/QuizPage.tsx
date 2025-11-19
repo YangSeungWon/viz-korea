@@ -3,6 +3,7 @@ import type { QuizMode, AdminLevel } from '../types';
 import QuizModeSelector from '../components/Quiz/QuizModeSelector';
 import FindRegionQuiz from '../components/Quiz/FindRegionQuiz';
 import NameQuiz from '../components/Quiz/NameQuiz';
+import OutlineQuiz from '../components/Quiz/OutlineQuiz';
 import TimeAttackQuiz from '../components/Quiz/TimeAttackQuiz';
 import PracticeMode from '../components/Quiz/PracticeMode';
 
@@ -34,6 +35,9 @@ export default function QuizPage() {
       )}
       {selectedMode === 'name-quiz' && (
         <NameQuiz adminLevel={adminLevel} onBack={handleBack} />
+      )}
+      {selectedMode === 'outline-quiz' && (
+        <OutlineQuiz adminLevel={adminLevel} onBack={handleBack} />
       )}
       {selectedMode === 'time-attack' && (
         <TimeAttackQuiz adminLevel={adminLevel} onBack={handleBack} />

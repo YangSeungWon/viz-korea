@@ -15,6 +15,7 @@ interface GeographicMapProps {
   showZoomControls?: boolean;
   correctRegions?: Set<string>;
   regionAttempts?: Map<string, number>;
+  outlineOnly?: boolean;
 }
 
 export default function GeographicMap({
@@ -29,6 +30,7 @@ export default function GeographicMap({
   showZoomControls = false,
   correctRegions,
   regionAttempts,
+  outlineOnly = false,
 }: GeographicMapProps) {
   const svgRef = useRef<SVGSVGElement>(null);
   const zoomBehaviorRef = useRef<any>(null);
@@ -73,6 +75,11 @@ export default function GeographicMap({
       .join('path')
       .attr('d', path as any)
       .attr('fill', (d) => {
+        // Outline only mode: transparent fill
+        if (outlineOnly) {
+          return 'transparent';
+        }
+
         const code = d.properties.CTPRVN_CD || d.properties.SIG_CD || d.properties.code;
 
         // Easy mode: show correct regions with color based on attempts
@@ -95,8 +102,8 @@ export default function GeographicMap({
         const value = valueMap.get(code) || valueMap.get(name);
         return value !== undefined ? colorScale(value) : '#e0e0e0';
       })
-      .attr('stroke', '#333')
-      .attr('stroke-width', 0.5)
+      .attr('stroke', outlineOnly ? '#000' : '#333')
+      .attr('stroke-width', outlineOnly ? 2 : 0.5)
       .style('cursor', 'pointer')
       .on('click', (_, d) => {
         const code = d.properties.CTPRVN_CD || d.properties.SIG_CD || d.properties.code;
@@ -164,7 +171,7 @@ export default function GeographicMap({
       }
     }
 
-  }, [data, visualizationData, width, height, colorScheme, onRegionClick, onRegionHover, highlightRegion, correctRegions, regionAttempts]);
+  }, [data, visualizationData, width, height, colorScheme, onRegionClick, onRegionHover, highlightRegion, correctRegions, regionAttempts, outlineOnly]);
 
   const handleZoomIn = () => {
     if (svgRef.current && zoomBehaviorRef.current) {

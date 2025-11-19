@@ -24,11 +24,11 @@ export default function QuizModeSelector({ onModeSelect }: QuizModeSelectorProps
       color: 'green',
     },
     {
-      mode: 'time-attack' as QuizMode,
-      title: '타임 어택',
-      description: '60초 안에 최대한 많은 문제를 맞추세요!',
-      icon: '⏱️',
-      color: 'red',
+      mode: 'outline-quiz' as QuizMode,
+      title: '경계선 맞추기',
+      description: '경계선(윤곽선)만 보고 지역 이름을 맞추세요!',
+      icon: '🎨',
+      color: 'purple',
     },
     {
       mode: 'practice' as QuizMode,

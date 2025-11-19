@@ -48,7 +48,7 @@ export interface HexCell {
 export type AdminLevel = 'sido' | 'sigungu' | 'eupmyeondong';
 
 // Quiz types
-export type QuizMode = 'find-region' | 'name-quiz' | 'time-attack' | 'practice';
+export type QuizMode = 'find-region' | 'name-quiz' | 'outline-quiz' | 'time-attack' | 'practice';
 
 export interface QuizQuestion {
   regionCode: string;
