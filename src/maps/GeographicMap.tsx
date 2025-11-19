@@ -27,6 +27,7 @@ export default function GeographicMap({
   showZoomControls = false,
 }: GeographicMapProps) {
   const svgRef = useRef<SVGSVGElement>(null);
+  const zoomBehaviorRef = useRef<any>(null);
 
   useEffect(() => {
     if (!svgRef.current || !data) return;
@@ -114,7 +115,7 @@ export default function GeographicMap({
     svg.call(zoom as any);
 
     // Store zoom behavior for external controls
-    (svgRef.current as any).__zoom = zoom;
+    zoomBehaviorRef.current = zoom;
 
     // Highlight region with blinking animation
     if (highlightRegion) {
@@ -146,32 +147,23 @@ export default function GeographicMap({
   }, [data, visualizationData, width, height, colorScheme, onRegionClick, onRegionHover, highlightRegion]);
 
   const handleZoomIn = () => {
-    if (svgRef.current) {
+    if (svgRef.current && zoomBehaviorRef.current) {
       const svg = d3.select(svgRef.current);
-      const zoom = (svgRef.current as any).__zoom;
-      if (zoom) {
-        svg.transition().duration(300).call(zoom.scaleBy, 1.5);
-      }
+      svg.transition().duration(300).call(zoomBehaviorRef.current.scaleBy, 1.5);
     }
   };
 
   const handleZoomOut = () => {
-    if (svgRef.current) {
+    if (svgRef.current && zoomBehaviorRef.current) {
       const svg = d3.select(svgRef.current);
-      const zoom = (svgRef.current as any).__zoom;
-      if (zoom) {
-        svg.transition().duration(300).call(zoom.scaleBy, 0.67);
-      }
+      svg.transition().duration(300).call(zoomBehaviorRef.current.scaleBy, 0.67);
     }
   };
 
   const handleZoomReset = () => {
-    if (svgRef.current) {
+    if (svgRef.current && zoomBehaviorRef.current) {
       const svg = d3.select(svgRef.current);
-      const zoom = (svgRef.current as any).__zoom;
-      if (zoom) {
-        svg.transition().duration(500).call(zoom.transform, d3.zoomIdentity);
-      }
+      svg.transition().duration(500).call(zoomBehaviorRef.current.transform, d3.zoomIdentity);
     }
   };
 
