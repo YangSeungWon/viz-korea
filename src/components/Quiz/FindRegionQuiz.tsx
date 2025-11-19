@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useMapData } from '../../hooks/useMapData';
 import GeographicMap from '../../maps/GeographicMap';
-import { generateQuizQuestions } from '../../utils/quizUtils';
+import { generateQuizQuestions, getSidoList } from '../../utils/quizUtils';
 import QuizResults from './QuizResults';
 import type { AdminLevel, QuizQuestion } from '../../types';
 
@@ -20,13 +20,21 @@ export default function FindRegionQuiz({ adminLevel, onBack }: FindRegionQuizPro
   const [answers, setAnswers] = useState<Array<{ question: QuizQuestion; correct: boolean; attempts: number }>>([]);
   const [attempts, setAttempts] = useState(0);
   const [showAnswer, setShowAnswer] = useState(false);
+  const [sidoFilter, setSidoFilter] = useState<string>('all');
+  const [sidoList, setSidoList] = useState<Array<{code: string, name: string}>>([]);
 
   useEffect(() => {
     if (geoData) {
-      const quizQuestions = generateQuizQuestions(geoData, 10);
+      // For sigungu level, extract sido list
+      if (adminLevel === 'sigungu') {
+        const list = getSidoList(geoData);
+        setSidoList(list);
+      }
+
+      const quizQuestions = generateQuizQuestions(geoData, 10, sidoFilter);
       setQuestions(quizQuestions);
     }
-  }, [geoData]);
+  }, [geoData, sidoFilter, adminLevel]);
 
   const handleRegionClick = (regionCode: string) => {
     if (!questions[currentIndex] || feedback || showAnswer) return;
@@ -118,7 +126,7 @@ export default function FindRegionQuiz({ adminLevel, onBack }: FindRegionQuizPro
           setAnswers([]);
           setAttempts(0);
           setShowAnswer(false);
-          const quizQuestions = generateQuizQuestions(geoData, 10);
+          const quizQuestions = generateQuizQuestions(geoData, 10, sidoFilter);
           setQuestions(quizQuestions);
         }}
       />
@@ -140,6 +148,35 @@ export default function FindRegionQuiz({ adminLevel, onBack }: FindRegionQuizPro
           문제 {currentIndex + 1} / {questions.length}
         </div>
       </div>
+
+      {/* Sido filter for sigungu level */}
+      {adminLevel === 'sigungu' && sidoList.length > 0 && (
+        <div className="bg-white rounded-lg shadow-md p-4">
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            시도 선택 (특정 지역만 퀴즈 풀기)
+          </label>
+          <select
+            value={sidoFilter}
+            onChange={(e) => {
+              setSidoFilter(e.target.value);
+              setCurrentIndex(0);
+              setScore(0);
+              setFeedback(null);
+              setAnswers([]);
+              setAttempts(0);
+              setShowAnswer(false);
+            }}
+            className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="all">전체 (모든 시도)</option>
+            {sidoList.map(sido => (
+              <option key={sido.code} value={sido.code}>
+                {sido.name}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
 
       <div className="bg-white rounded-lg shadow-md p-6">
         <div className="mb-4">
