@@ -120,13 +120,7 @@ export default function NameQuiz({ adminLevel, onBack }: NameQuizProps) {
         <div className="bg-white rounded-lg shadow-md p-4">
           <h3 className="text-lg font-semibold mb-4">이 지역의 이름은?</h3>
           <GeographicMap
-            data={{
-              ...geoData,
-              features: geoData.features.filter(f =>
-                (f.properties.CTP_KOR_NM === currentQuestion?.regionName ||
-                 f.properties.SIG_KOR_NM === currentQuestion?.regionName)
-              ),
-            }}
+            data={geoData}
             visualizationData={currentQuestion ? [{
               regionCode: currentQuestion.regionCode,
               regionName: currentQuestion.regionName,
