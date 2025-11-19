@@ -45,10 +45,20 @@ export default function GeographicMap({
     const g = svg.append('g');
 
     // Create projection for Korea (centered to include Jeju Island)
-    const projection = d3.geoMercator()
-      .center([127.5, 36.0])
-      .scale(4500)
-      .translate([width / 2, height / 2]);
+    const projection = d3.geoMercator();
+
+    // If outline only mode, fit the bounds to the single region
+    if (outlineOnly && data.features.length > 0) {
+      projection.fitExtent(
+        [[20, 20], [width - 20, height - 20]],
+        data as any
+      );
+    } else {
+      projection
+        .center([127.5, 36.0])
+        .scale(4500)
+        .translate([width / 2, height / 2]);
+    }
 
     const path = d3.geoPath().projection(projection);
 
