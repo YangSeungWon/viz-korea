@@ -22,6 +22,8 @@ export default function FindRegionQuiz({ adminLevel, onBack }: FindRegionQuizPro
   const [showAnswer, setShowAnswer] = useState(false);
   const [sidoFilter, setSidoFilter] = useState<string>('all');
   const [sidoList, setSidoList] = useState<Array<{code: string, name: string}>>([]);
+  const [difficulty, setDifficulty] = useState<'easy' | 'hard'>('easy');
+  const [correctRegions, setCorrectRegions] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     if (geoData) {
@@ -31,10 +33,11 @@ export default function FindRegionQuiz({ adminLevel, onBack }: FindRegionQuizPro
         setSidoList(list);
       }
 
-      const quizQuestions = generateQuizQuestions(geoData, 10, sidoFilter);
+      // 두 모드 모두 아직 맞추지 않은 지역만 출제
+      const quizQuestions = generateQuizQuestions(geoData, 1, sidoFilter, correctRegions);
       setQuestions(quizQuestions);
     }
-  }, [geoData, sidoFilter, adminLevel]);
+  }, [geoData, sidoFilter, adminLevel, correctRegions]);
 
   const handleRegionClick = (regionCode: string) => {
     if (!questions[currentIndex] || feedback || showAnswer) return;
@@ -51,6 +54,9 @@ export default function FindRegionQuiz({ adminLevel, onBack }: FindRegionQuizPro
       const points = attempts === 0 ? 10 : attempts === 1 ? 7 : 5;
       setScore(score + points);
 
+      // 맞춘 지역 추적 (두 모드 모두)
+      setCorrectRegions(prev => new Set(prev).add(currentQuestion.regionCode));
+
       // 피드백 메시지
       const attemptMsg = attempts === 0 ? '한 번에 정답!' :
                         attempts === 1 ? '2번 만에 정답!' :
@@ -60,13 +66,18 @@ export default function FindRegionQuiz({ adminLevel, onBack }: FindRegionQuizPro
       setAnswers([...answers, { question: currentQuestion, correct: true, attempts: attempts + 1 }]);
 
       setTimeout(() => {
-        if (currentIndex < questions.length - 1) {
+        // 모든 지역을 맞출 때까지 계속 (두 모드 모두)
+        const totalRegions = geoData?.features.length || 0;
+        const newCorrectCount = correctRegions.size + 1;
+
+        if (newCorrectCount >= totalRegions) {
+          setIsComplete(true);
+        } else {
+          // 다음 문제 (아직 맞추지 않은 지역 중 랜덤)
           setCurrentIndex(currentIndex + 1);
           setFeedback(null);
           setAttempts(0);
           setShowAnswer(false);
-        } else {
-          setIsComplete(true);
         }
       }, 2000);
     } else {
@@ -126,7 +137,8 @@ export default function FindRegionQuiz({ adminLevel, onBack }: FindRegionQuizPro
           setAnswers([]);
           setAttempts(0);
           setShowAnswer(false);
-          const quizQuestions = generateQuizQuestions(geoData, 10, sidoFilter);
+          setCorrectRegions(new Set());
+          const quizQuestions = generateQuizQuestions(geoData, 1, sidoFilter, new Set());
           setQuestions(quizQuestions);
         }}
       />
@@ -149,6 +161,58 @@ export default function FindRegionQuiz({ adminLevel, onBack }: FindRegionQuizPro
         </div>
       </div>
 
+      {/* Difficulty selector */}
+      <div className="bg-white rounded-lg shadow-md p-4">
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          난이도 선택
+        </label>
+        <div className="flex gap-2">
+          <button
+            onClick={() => {
+              setDifficulty('easy');
+              setCurrentIndex(0);
+              setScore(0);
+              setFeedback(null);
+              setAnswers([]);
+              setAttempts(0);
+              setShowAnswer(false);
+              setCorrectRegions(new Set());
+            }}
+            className={`flex-1 px-4 py-2 rounded-lg font-medium transition-colors ${
+              difficulty === 'easy'
+                ? 'bg-blue-500 text-white'
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+            }`}
+          >
+            쉬움
+          </button>
+          <button
+            onClick={() => {
+              setDifficulty('hard');
+              setCurrentIndex(0);
+              setScore(0);
+              setFeedback(null);
+              setAnswers([]);
+              setAttempts(0);
+              setShowAnswer(false);
+              setCorrectRegions(new Set());
+            }}
+            className={`flex-1 px-4 py-2 rounded-lg font-medium transition-colors ${
+              difficulty === 'hard'
+                ? 'bg-blue-500 text-white'
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+            }`}
+          >
+            어려움
+          </button>
+        </div>
+        <p className="text-xs text-gray-600 mt-2">
+          {difficulty === 'easy'
+            ? '💡 쉬움: 맞춘 지역이 초록색으로 표시됩니다'
+            : '💪 어려움: 맞춘 지역이 표시되지 않습니다'}
+        </p>
+      </div>
+
       {/* Sido filter for sigungu level */}
       {adminLevel === 'sigungu' && sidoList.length > 0 && (
         <div className="bg-white rounded-lg shadow-md p-4">
@@ -165,6 +229,7 @@ export default function FindRegionQuiz({ adminLevel, onBack }: FindRegionQuizPro
               setAnswers([]);
               setAttempts(0);
               setShowAnswer(false);
+              setCorrectRegions(new Set());
             }}
             className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
@@ -188,9 +253,15 @@ export default function FindRegionQuiz({ adminLevel, onBack }: FindRegionQuizPro
               <div className="text-sm text-gray-600">
                 시도: {attempts}/3
               </div>
-              <div className="text-xl font-semibold text-blue-600">
-                점수: {score}점
-              </div>
+              {difficulty === 'easy' ? (
+                <div className="text-xl font-semibold text-blue-600">
+                  {correctRegions.size} / {geoData?.features.length || 0}
+                </div>
+              ) : (
+                <div className="text-xl font-semibold text-blue-600">
+                  점수: {score}점
+                </div>
+              )}
             </div>
           </div>
           <p className="text-gray-600">지도에서 해당 지역을 클릭하세요 (3회까지 시도 가능)</p>
@@ -204,6 +275,7 @@ export default function FindRegionQuiz({ adminLevel, onBack }: FindRegionQuizPro
             height={600}
             highlightRegion={showAnswer ? currentQuestion?.regionCode : undefined}
             showZoomControls={true}
+            correctRegions={difficulty === 'easy' ? correctRegions : undefined}
           />
 
           {/* Feedback overlay */}

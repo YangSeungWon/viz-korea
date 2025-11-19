@@ -13,6 +13,7 @@ interface GeographicMapProps {
   colorScheme?: string;
   highlightRegion?: string;
   showZoomControls?: boolean;
+  correctRegions?: Set<string>;
 }
 
 export default function GeographicMap({
@@ -25,6 +26,7 @@ export default function GeographicMap({
   colorScheme = 'blues',
   highlightRegion,
   showZoomControls = false,
+  correctRegions,
 }: GeographicMapProps) {
   const svgRef = useRef<SVGSVGElement>(null);
   const zoomBehaviorRef = useRef<any>(null);
@@ -69,8 +71,14 @@ export default function GeographicMap({
       .join('path')
       .attr('d', path as any)
       .attr('fill', (d) => {
-        if (!colorScale) return '#e0e0e0';
         const code = d.properties.CTPRVN_CD || d.properties.SIG_CD || d.properties.code;
+
+        // Easy mode: show correct regions in green
+        if (correctRegions && correctRegions.has(code)) {
+          return '#86efac'; // green-300
+        }
+
+        if (!colorScale) return '#e0e0e0';
         const name = d.properties.CTP_KOR_NM || d.properties.SIG_KOR_NM || d.properties.name;
         const value = valueMap.get(code) || valueMap.get(name);
         return value !== undefined ? colorScale(value) : '#e0e0e0';
@@ -144,7 +152,7 @@ export default function GeographicMap({
       }
     }
 
-  }, [data, visualizationData, width, height, colorScheme, onRegionClick, onRegionHover, highlightRegion]);
+  }, [data, visualizationData, width, height, colorScheme, onRegionClick, onRegionHover, highlightRegion, correctRegions]);
 
   const handleZoomIn = () => {
     if (svgRef.current && zoomBehaviorRef.current) {

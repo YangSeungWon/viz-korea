@@ -3,7 +3,8 @@ import type { RegionCollection, QuizQuestion } from '../types';
 export function generateQuizQuestions(
   geoData: RegionCollection,
   count: number = 10,
-  sidoFilter?: string
+  sidoFilter?: string,
+  excludeRegions?: Set<string>
 ): QuizQuestion[] {
   let features = geoData.features;
 
@@ -16,6 +17,14 @@ export function generateQuizQuestions(
       // Check if this sigungu belongs to the selected sido
       // SIG_CD format: first 2 digits are sido code (e.g., 11xxx for Seoul)
       return sigCode.startsWith(sidoFilter) || sigName.includes(sidoFilter);
+    });
+  }
+
+  // Exclude already answered regions (for easy mode)
+  if (excludeRegions && excludeRegions.size > 0) {
+    features = features.filter(feature => {
+      const regionCode = feature.properties.CTPRVN_CD || feature.properties.SIG_CD || feature.properties.code || '';
+      return !excludeRegions.has(regionCode);
     });
   }
 
