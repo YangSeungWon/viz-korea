@@ -196,20 +196,7 @@ export default function FindRegionQuiz({ adminLevel, onBack }: FindRegionQuizPro
           <p className="text-gray-600">지도에서 해당 지역을 클릭하세요 (3회까지 시도 가능)</p>
         </div>
 
-        {feedback && (
-          <div className={`mb-4 p-4 rounded-lg ${
-            feedback.includes('정답') ?
-              feedback.includes('한 번') ? 'bg-green-100 text-green-800' :
-              feedback.includes('2번') ? 'bg-yellow-100 text-yellow-800' :
-              'bg-orange-100 text-orange-800'
-            : showAnswer ? 'bg-red-100 text-red-800'
-            : 'bg-gray-100 text-gray-800'
-          }`}>
-            {feedback}
-          </div>
-        )}
-
-        <div className="border border-gray-200 rounded-lg overflow-hidden">
+        <div className="relative border border-gray-200 rounded-lg overflow-hidden">
           <GeographicMap
             data={geoData}
             onRegionClick={handleRegionClick}
@@ -218,6 +205,22 @@ export default function FindRegionQuiz({ adminLevel, onBack }: FindRegionQuizPro
             highlightRegion={showAnswer ? currentQuestion?.regionCode : undefined}
             showZoomControls={true}
           />
+
+          {/* Feedback overlay */}
+          {feedback && (
+            <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-10 max-w-lg w-full px-4">
+              <div className={`p-4 rounded-lg shadow-lg ${
+                feedback.includes('정답') ?
+                  feedback.includes('한 번') ? 'bg-green-100 text-green-800 border-2 border-green-300' :
+                  feedback.includes('2번') ? 'bg-yellow-100 text-yellow-800 border-2 border-yellow-300' :
+                  'bg-orange-100 text-orange-800 border-2 border-orange-300'
+                : showAnswer ? 'bg-red-100 text-red-800 border-2 border-red-300'
+                : 'bg-gray-100 text-gray-800 border-2 border-gray-300'
+              }`}>
+                {feedback}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
