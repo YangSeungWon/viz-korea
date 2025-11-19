@@ -14,6 +14,7 @@ interface GeographicMapProps {
   highlightRegion?: string;
   showZoomControls?: boolean;
   correctRegions?: Set<string>;
+  regionAttempts?: Map<string, number>;
 }
 
 export default function GeographicMap({
@@ -27,6 +28,7 @@ export default function GeographicMap({
   highlightRegion,
   showZoomControls = false,
   correctRegions,
+  regionAttempts,
 }: GeographicMapProps) {
   const svgRef = useRef<SVGSVGElement>(null);
   const zoomBehaviorRef = useRef<any>(null);
@@ -73,9 +75,19 @@ export default function GeographicMap({
       .attr('fill', (d) => {
         const code = d.properties.CTPRVN_CD || d.properties.SIG_CD || d.properties.code;
 
-        // Easy mode: show correct regions in green
+        // Easy mode: show correct regions with color based on attempts
         if (correctRegions && correctRegions.has(code)) {
-          return '#86efac'; // green-300
+          const attemptCount = regionAttempts?.get(code) || 1;
+
+          if (attemptCount === 1) {
+            return '#86efac'; // green-300 - 1회 만에 맞춤
+          } else if (attemptCount === 2) {
+            return '#fde047'; // yellow-300 - 2회 만에 맞춤
+          } else if (attemptCount === 3) {
+            return '#fdba74'; // orange-300 - 3회 만에 맞춤
+          } else {
+            return '#f87171'; // red-400 - 3회 초과 (틀림)
+          }
         }
 
         if (!colorScale) return '#e0e0e0';
@@ -152,7 +164,7 @@ export default function GeographicMap({
       }
     }
 
-  }, [data, visualizationData, width, height, colorScheme, onRegionClick, onRegionHover, highlightRegion, correctRegions]);
+  }, [data, visualizationData, width, height, colorScheme, onRegionClick, onRegionHover, highlightRegion, correctRegions, regionAttempts]);
 
   const handleZoomIn = () => {
     if (svgRef.current && zoomBehaviorRef.current) {

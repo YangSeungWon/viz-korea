@@ -24,6 +24,7 @@ export default function FindRegionQuiz({ adminLevel, onBack }: FindRegionQuizPro
   const [sidoList, setSidoList] = useState<Array<{code: string, name: string}>>([]);
   const [difficulty, setDifficulty] = useState<'easy' | 'hard'>('easy');
   const [correctRegions, setCorrectRegions] = useState<Set<string>>(new Set());
+  const [regionAttempts, setRegionAttempts] = useState<Map<string, number>>(new Map());
 
   useEffect(() => {
     if (geoData) {
@@ -56,6 +57,9 @@ export default function FindRegionQuiz({ adminLevel, onBack }: FindRegionQuizPro
 
       // 맞춘 지역 추적 (두 모드 모두)
       setCorrectRegions(prev => new Set(prev).add(currentQuestion.regionCode));
+
+      // 시도 횟수 기록 (쉬움 모드용)
+      setRegionAttempts(prev => new Map(prev).set(currentQuestion.regionCode, attempts + 1));
 
       // 피드백 메시지
       const attemptMsg = attempts === 0 ? '한 번에 정답!' :
@@ -90,14 +94,23 @@ export default function FindRegionQuiz({ adminLevel, onBack }: FindRegionQuizPro
         setShowAnswer(true);
         setAnswers([...answers, { question: currentQuestion, correct: false, attempts: 3 }]);
 
+        // 틀린 지역도 추적 (빨간색으로 표시)
+        setCorrectRegions(prev => new Set(prev).add(currentQuestion.regionCode));
+        setRegionAttempts(prev => new Map(prev).set(currentQuestion.regionCode, 4)); // 4 = 틀림
+
         setTimeout(() => {
-          if (currentIndex < questions.length - 1) {
+          // 모든 지역을 맞출 때까지 계속 (두 모드 모두)
+          const totalRegions = geoData?.features.length || 0;
+          const newCorrectCount = correctRegions.size + 1;
+
+          if (newCorrectCount >= totalRegions) {
+            setIsComplete(true);
+          } else {
+            // 다음 문제
             setCurrentIndex(currentIndex + 1);
             setFeedback(null);
             setAttempts(0);
             setShowAnswer(false);
-          } else {
-            setIsComplete(true);
           }
         }, 4000);
       } else {
@@ -138,6 +151,7 @@ export default function FindRegionQuiz({ adminLevel, onBack }: FindRegionQuizPro
           setAttempts(0);
           setShowAnswer(false);
           setCorrectRegions(new Set());
+          setRegionAttempts(new Map());
           const quizQuestions = generateQuizQuestions(geoData, 1, sidoFilter, new Set());
           setQuestions(quizQuestions);
         }}
@@ -177,6 +191,7 @@ export default function FindRegionQuiz({ adminLevel, onBack }: FindRegionQuizPro
               setAttempts(0);
               setShowAnswer(false);
               setCorrectRegions(new Set());
+              setRegionAttempts(new Map());
             }}
             className={`flex-1 px-4 py-2 rounded-lg font-medium transition-colors ${
               difficulty === 'easy'
@@ -196,6 +211,7 @@ export default function FindRegionQuiz({ adminLevel, onBack }: FindRegionQuizPro
               setAttempts(0);
               setShowAnswer(false);
               setCorrectRegions(new Set());
+              setRegionAttempts(new Map());
             }}
             className={`flex-1 px-4 py-2 rounded-lg font-medium transition-colors ${
               difficulty === 'hard'
@@ -208,7 +224,7 @@ export default function FindRegionQuiz({ adminLevel, onBack }: FindRegionQuizPro
         </div>
         <p className="text-xs text-gray-600 mt-2">
           {difficulty === 'easy'
-            ? '💡 쉬움: 맞춘 지역이 초록색으로 표시됩니다'
+            ? '💡 쉬움: 1회=초록 / 2회=노랑 / 3회=주황 / 틀림=빨강'
             : '💪 어려움: 맞춘 지역이 표시되지 않습니다'}
         </p>
       </div>
@@ -230,6 +246,7 @@ export default function FindRegionQuiz({ adminLevel, onBack }: FindRegionQuizPro
               setAttempts(0);
               setShowAnswer(false);
               setCorrectRegions(new Set());
+              setRegionAttempts(new Map());
             }}
             className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
@@ -276,6 +293,7 @@ export default function FindRegionQuiz({ adminLevel, onBack }: FindRegionQuizPro
             highlightRegion={showAnswer ? currentQuestion?.regionCode : undefined}
             showZoomControls={true}
             correctRegions={difficulty === 'easy' ? correctRegions : undefined}
+            regionAttempts={difficulty === 'easy' ? regionAttempts : undefined}
           />
 
           {/* Feedback overlay */}
