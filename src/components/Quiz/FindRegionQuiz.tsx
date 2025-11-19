@@ -37,6 +37,11 @@ export default function FindRegionQuiz({ adminLevel, onBack }: FindRegionQuizPro
       // 두 모드 모두 아직 맞추지 않은 지역만 출제
       const quizQuestions = generateQuizQuestions(geoData, 1, sidoFilter, correctRegions);
       setQuestions(quizQuestions);
+
+      // If currentIndex is out of bounds, reset to 0
+      if (currentIndex >= quizQuestions.length) {
+        setCurrentIndex(0);
+      }
     }
   }, [geoData, sidoFilter, adminLevel, correctRegions]);
 
@@ -160,6 +165,18 @@ export default function FindRegionQuiz({ adminLevel, onBack }: FindRegionQuizPro
   }
 
   const currentQuestion = questions[currentIndex];
+
+  // Safety check: if no question available, show loading
+  if (!currentQuestion) {
+    return (
+      <div className="flex items-center justify-center min-h-[500px]">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+          <p className="text-gray-600">문제 준비 중...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">
