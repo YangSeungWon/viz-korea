@@ -216,6 +216,7 @@ export default function FindRegionQuiz({ adminLevel, onBack }: FindRegionQuizPro
             width={900}
             height={600}
             highlightRegion={showAnswer ? currentQuestion?.regionCode : undefined}
+            showZoomControls={true}
           />
         </div>
       </div>

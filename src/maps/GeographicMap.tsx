@@ -12,6 +12,7 @@ interface GeographicMapProps {
   height?: number;
   colorScheme?: string;
   highlightRegion?: string;
+  showZoomControls?: boolean;
 }
 
 export default function GeographicMap({
@@ -23,6 +24,7 @@ export default function GeographicMap({
   height = 600,
   colorScheme = 'blues',
   highlightRegion,
+  showZoomControls = false,
 }: GeographicMapProps) {
   const svgRef = useRef<SVGSVGElement>(null);
 
@@ -111,6 +113,9 @@ export default function GeographicMap({
 
     svg.call(zoom as any);
 
+    // Store zoom behavior for external controls
+    (svgRef.current as any).__zoom = zoom;
+
     // Highlight region with blinking animation
     if (highlightRegion) {
       g.selectAll('path')
@@ -140,12 +145,76 @@ export default function GeographicMap({
 
   }, [data, visualizationData, width, height, colorScheme, onRegionClick, onRegionHover, highlightRegion]);
 
+  const handleZoomIn = () => {
+    if (svgRef.current) {
+      const svg = d3.select(svgRef.current);
+      const zoom = (svgRef.current as any).__zoom;
+      if (zoom) {
+        svg.transition().duration(300).call(zoom.scaleBy, 1.5);
+      }
+    }
+  };
+
+  const handleZoomOut = () => {
+    if (svgRef.current) {
+      const svg = d3.select(svgRef.current);
+      const zoom = (svgRef.current as any).__zoom;
+      if (zoom) {
+        svg.transition().duration(300).call(zoom.scaleBy, 0.67);
+      }
+    }
+  };
+
+  const handleZoomReset = () => {
+    if (svgRef.current) {
+      const svg = d3.select(svgRef.current);
+      const zoom = (svgRef.current as any).__zoom;
+      if (zoom) {
+        svg.transition().duration(500).call(zoom.transform, d3.zoomIdentity);
+      }
+    }
+  };
+
   return (
-    <svg
-      ref={svgRef}
-      width={width}
-      height={height}
-      className="border border-gray-300 rounded"
-    />
+    <div className="relative">
+      <svg
+        ref={svgRef}
+        width={width}
+        height={height}
+        className="border border-gray-300 rounded"
+      />
+
+      {showZoomControls && (
+        <div className="absolute top-2 right-2 flex flex-col gap-1 bg-white rounded-lg shadow-lg p-1">
+          <button
+            onClick={handleZoomIn}
+            className="w-8 h-8 flex items-center justify-center bg-white hover:bg-gray-100 rounded border border-gray-300 text-gray-700 font-bold"
+            title="확대"
+          >
+            +
+          </button>
+          <button
+            onClick={handleZoomOut}
+            className="w-8 h-8 flex items-center justify-center bg-white hover:bg-gray-100 rounded border border-gray-300 text-gray-700 font-bold"
+            title="축소"
+          >
+            −
+          </button>
+          <button
+            onClick={handleZoomReset}
+            className="w-8 h-8 flex items-center justify-center bg-white hover:bg-gray-100 rounded border border-gray-300 text-gray-700 text-xs"
+            title="리셋"
+          >
+            ⟲
+          </button>
+        </div>
+      )}
+
+      {showZoomControls && (
+        <div className="text-xs text-gray-500 mt-1">
+          💡 마우스 휠로 확대/축소, 드래그로 이동 가능
+        </div>
+      )}
+    </div>
   );
 }
