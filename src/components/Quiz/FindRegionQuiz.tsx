@@ -34,11 +34,16 @@ export default function FindRegionQuiz({ adminLevel, onBack }: FindRegionQuizPro
         setSidoList(list);
       }
 
-      // 두 모드 모두 아직 맞추지 않은 지역만 출제
-      const quizQuestions = generateQuizQuestions(geoData, 1, sidoFilter, correctRegions);
+      // Generate all questions at once (not filtering by correctRegions to avoid refresh)
+      // Generate enough questions to cover all regions
+      const totalRegions = geoData.features.length;
+      const quizQuestions = generateQuizQuestions(geoData, totalRegions, sidoFilter);
       setQuestions(quizQuestions);
+
+      // Reset currentIndex when questions change
+      setCurrentIndex(0);
     }
-  }, [geoData, sidoFilter, adminLevel, correctRegions]);
+  }, [geoData, sidoFilter, adminLevel]);
 
   // Separate effect to handle currentIndex bounds checking when questions change
   useEffect(() => {
@@ -159,7 +164,8 @@ export default function FindRegionQuiz({ adminLevel, onBack }: FindRegionQuizPro
           setShowAnswer(false);
           setCorrectRegions(new Set());
           setRegionAttempts(new Map());
-          const quizQuestions = generateQuizQuestions(geoData, 1, sidoFilter, new Set());
+          const totalRegions = geoData?.features.length || 0;
+          const quizQuestions = generateQuizQuestions(geoData!, totalRegions, sidoFilter);
           setQuestions(quizQuestions);
         }}
       />
