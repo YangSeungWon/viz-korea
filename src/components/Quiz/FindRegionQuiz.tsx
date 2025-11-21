@@ -53,7 +53,8 @@ export default function FindRegionQuiz({ adminLevel, onBack }: FindRegionQuizPro
   }, [questions, currentIndex]);
 
   const handleRegionClick = (regionCode: string) => {
-    if (!questions[currentIndex] || feedback || showAnswer) return;
+    // Only block clicks during answer reveal (3 failures)
+    if (!questions[currentIndex] || showAnswer) return;
 
     const currentQuestion = questions[currentIndex];
     const isCorrect = regionCode === currentQuestion.regionCode ||
@@ -74,35 +75,35 @@ export default function FindRegionQuiz({ adminLevel, onBack }: FindRegionQuizPro
       setRegionAttempts(prev => new Map(prev).set(currentQuestion.regionCode, attempts + 1));
 
       // 피드백 메시지
-      const attemptMsg = attempts === 0 ? '한 번에 정답!' :
-                        attempts === 1 ? '2번 만에 정답!' :
-                        '3번 만에 정답!';
-      setFeedback(`${attemptMsg} 🎉 (+${points}점)`);
+      const attemptMsg = attempts === 0 ? '✓ 한 번에 정답!' :
+                        attempts === 1 ? '✓ 2번 만에 정답!' :
+                        '✓ 3번 만에 정답!';
+      setFeedback(`${attemptMsg} (+${points}점)`);
 
       setAnswers([...answers, { question: currentQuestion, correct: true, attempts: attempts + 1 }]);
 
-      setTimeout(() => {
-        // 모든 지역을 맞출 때까지 계속 (두 모드 모두)
-        const totalRegions = geoData?.features.length || 0;
-        const newCorrectCount = correctRegions.size + 1;
+      // 모든 지역을 맞출 때까지 계속 (두 모드 모두)
+      const totalRegions = geoData?.features.length || 0;
+      const newCorrectCount = correctRegions.size + 1;
 
-        if (newCorrectCount >= totalRegions) {
-          setIsComplete(true);
-        } else {
-          // 다음 문제 (아직 맞추지 않은 지역 중 랜덤)
-          setCurrentIndex(currentIndex + 1);
-          setFeedback(null);
-          setAttempts(0);
-          setShowAnswer(false);
-        }
-      }, 2000);
+      if (newCorrectCount >= totalRegions) {
+        setIsComplete(true);
+      } else {
+        // 다음 문제로 즉시 이동
+        setCurrentIndex(currentIndex + 1);
+        setAttempts(0);
+        setShowAnswer(false);
+
+        // Clear feedback after a short delay
+        setTimeout(() => setFeedback(null), 1500);
+      }
     } else {
       const newAttempts = attempts + 1;
       setAttempts(newAttempts);
 
       if (newAttempts >= 3) {
         // 3회 실패 - 정답 표시
-        setFeedback(`3회 모두 틀렸습니다. 정답은 "${currentQuestion.regionName}"입니다. (깜빡이는 지역 확인)`);
+        setFeedback(`✗ 3회 실패 - 정답: "${currentQuestion.regionName}"`);
         setShowAnswer(true);
         setAnswers([...answers, { question: currentQuestion, correct: false, attempts: 3 }]);
 
@@ -110,28 +111,26 @@ export default function FindRegionQuiz({ adminLevel, onBack }: FindRegionQuizPro
         setCorrectRegions(prev => new Set(prev).add(currentQuestion.regionCode));
         setRegionAttempts(prev => new Map(prev).set(currentQuestion.regionCode, 4)); // 4 = 틀림
 
+        // Wait longer to show the answer
         setTimeout(() => {
-          // 모든 지역을 맞출 때까지 계속 (두 모드 모두)
           const totalRegions = geoData?.features.length || 0;
           const newCorrectCount = correctRegions.size + 1;
 
           if (newCorrectCount >= totalRegions) {
             setIsComplete(true);
           } else {
-            // 다음 문제
             setCurrentIndex(currentIndex + 1);
             setFeedback(null);
             setAttempts(0);
             setShowAnswer(false);
           }
-        }, 4000);
+        }, 3000);
       } else {
         // 아직 기회 남음
-        setFeedback(`틀렸습니다! 남은 기회: ${3 - newAttempts}회`);
+        setFeedback(`✗ 틀림 (남은 기회: ${3 - newAttempts}회)`);
 
-        setTimeout(() => {
-          setFeedback(null);
-        }, 1500);
+        // Clear feedback after a short delay
+        setTimeout(() => setFeedback(null), 1000);
       }
     }
   };
@@ -306,10 +305,26 @@ export default function FindRegionQuiz({ adminLevel, onBack }: FindRegionQuizPro
               )}
             </div>
           </div>
-          <p className="text-gray-600">지도에서 해당 지역을 클릭하세요 (3회까지 시도 가능)</p>
+
+          {/* Feedback bar - outside map */}
+          <div className="min-h-[32px] mb-2">
+            {feedback && (
+              <div className={`py-2 px-4 rounded-lg text-sm font-medium inline-block ${
+                feedback.includes('✓') ?
+                  feedback.includes('한 번') ? 'bg-green-100 text-green-800' :
+                  feedback.includes('2번') ? 'bg-yellow-100 text-yellow-800' :
+                  'bg-orange-100 text-orange-800'
+                : 'bg-red-100 text-red-800'
+              }`}>
+                {feedback}
+              </div>
+            )}
+          </div>
+
+          <p className="text-gray-600 text-sm">지도에서 해당 지역을 클릭하세요 (3회까지 시도 가능)</p>
         </div>
 
-        <div className="relative border border-gray-200 rounded-lg overflow-hidden">
+        <div className="border border-gray-200 rounded-lg overflow-hidden">
           <GeographicMap
             data={geoData}
             onRegionClick={handleRegionClick}
@@ -320,22 +335,6 @@ export default function FindRegionQuiz({ adminLevel, onBack }: FindRegionQuizPro
             correctRegions={difficulty === 'easy' ? correctRegions : undefined}
             regionAttempts={difficulty === 'easy' ? regionAttempts : undefined}
           />
-
-          {/* Feedback overlay */}
-          {feedback && (
-            <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-10 max-w-lg w-full px-4">
-              <div className={`p-4 rounded-lg shadow-lg ${
-                feedback.includes('정답') ?
-                  feedback.includes('한 번') ? 'bg-green-100 text-green-800 border-2 border-green-300' :
-                  feedback.includes('2번') ? 'bg-yellow-100 text-yellow-800 border-2 border-yellow-300' :
-                  'bg-orange-100 text-orange-800 border-2 border-orange-300'
-                : showAnswer ? 'bg-red-100 text-red-800 border-2 border-red-300'
-                : 'bg-gray-100 text-gray-800 border-2 border-gray-300'
-              }`}>
-                {feedback}
-              </div>
-            </div>
-          )}
         </div>
       </div>
     </div>
