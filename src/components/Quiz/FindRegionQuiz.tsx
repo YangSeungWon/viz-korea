@@ -37,13 +37,15 @@ export default function FindRegionQuiz({ adminLevel, onBack }: FindRegionQuizPro
       // 두 모드 모두 아직 맞추지 않은 지역만 출제
       const quizQuestions = generateQuizQuestions(geoData, 1, sidoFilter, correctRegions);
       setQuestions(quizQuestions);
-
-      // If currentIndex is out of bounds, reset to 0
-      if (currentIndex >= quizQuestions.length) {
-        setCurrentIndex(0);
-      }
     }
   }, [geoData, sidoFilter, adminLevel, correctRegions]);
+
+  // Separate effect to handle currentIndex bounds checking when questions change
+  useEffect(() => {
+    if (questions.length > 0 && currentIndex >= questions.length) {
+      setCurrentIndex(0);
+    }
+  }, [questions, currentIndex]);
 
   const handleRegionClick = (regionCode: string) => {
     if (!questions[currentIndex] || feedback || showAnswer) return;

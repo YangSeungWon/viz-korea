@@ -12,11 +12,32 @@ export function generateQuizQuestions(
   if (sidoFilter && sidoFilter !== 'all') {
     features = features.filter(feature => {
       const sigCode = feature.properties.SIG_CD || '';
-      const sigName = feature.properties.SIG_KOR_NM || '';
 
       // Check if this sigungu belongs to the selected sido
       // SIG_CD format: first 2 digits are sido code (e.g., 11xxx for Seoul)
-      return sigCode.startsWith(sidoFilter) || sigName.includes(sidoFilter);
+
+      // Support both code-based and name-based filtering
+      // 1. Code matching: exact match on first 2 digits (e.g., "11" for Seoul)
+      if (sigCode.startsWith(sidoFilter)) {
+        return true;
+      }
+
+      // 2. Name matching: extract sido from sigCode and compare with filter
+      // This supports future name-based search functionality
+      const sidoCodeFromSig = sigCode.substring(0, 2);
+      const sidoCodeMap: {[key: string]: string} = {
+        '11': '서울', '26': '부산', '27': '대구', '28': '인천',
+        '29': '광주', '30': '대전', '31': '울산', '36': '세종',
+        '41': '경기', '42': '강원', '43': '충북', '44': '충남',
+        '45': '전북', '46': '전남', '47': '경북', '48': '경남',
+        '50': '제주', '51': '강원', '52': '전북'
+      };
+      const sidoName = sidoCodeMap[sidoCodeFromSig];
+
+      // Match if filter is contained in sido name (e.g., "경기" matches "경기도")
+      // Use includes for partial matching, but only on extracted sido name to prevent
+      // false positives like matching "경주" when searching for "경기"
+      return sidoName?.includes(sidoFilter) || false;
     });
   }
 

@@ -101,6 +101,18 @@ export default function NameQuiz({ adminLevel, onBack }: NameQuizProps) {
 
   const currentQuestion = questions[currentIndex];
 
+  // Safety check: if no question available, show loading
+  if (!currentQuestion) {
+    return (
+      <div className="flex items-center justify-center min-h-[500px]">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+          <p className="text-gray-600">문제 준비 중...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">

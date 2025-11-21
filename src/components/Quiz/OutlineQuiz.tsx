@@ -101,6 +101,29 @@ export default function OutlineQuiz({ adminLevel, onBack }: NameQuizProps) {
 
   const currentQuestion = questions[currentIndex];
 
+  // Safety check: if no question available, show loading
+  if (!currentQuestion) {
+    return (
+      <div className="flex items-center justify-center min-h-[500px]">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+          <p className="text-gray-600">문제 준비 중...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Filter features for current question, with safety fallback
+  const filteredFeatures = geoData.features.filter(f =>
+    (f.properties.CTP_KOR_NM === currentQuestion.regionName ||
+     f.properties.SIG_KOR_NM === currentQuestion.regionName)
+  );
+
+  // If no features found, use full dataset to prevent blank map
+  const mapData = filteredFeatures.length > 0
+    ? { ...geoData, features: filteredFeatures }
+    : geoData;
+
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
@@ -120,13 +143,7 @@ export default function OutlineQuiz({ adminLevel, onBack }: NameQuizProps) {
         <div className="bg-white rounded-lg shadow-md p-4">
           <h3 className="text-lg font-semibold mb-4">경계선만 보고 맞춰보세요! 🎨</h3>
           <GeographicMap
-            data={{
-              ...geoData,
-              features: geoData.features.filter(f =>
-                (f.properties.CTP_KOR_NM === currentQuestion?.regionName ||
-                 f.properties.SIG_KOR_NM === currentQuestion?.regionName)
-              ),
-            }}
+            data={mapData}
             width={450}
             height={400}
             outlineOnly={true}

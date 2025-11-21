@@ -28,15 +28,15 @@ export default function TimeAttackQuiz({ adminLevel, onBack }: TimeAttackQuizPro
   }, [geoData]);
 
   useEffect(() => {
-    if (timeRemaining > 0 && !isComplete) {
+    if (timeRemaining > 0 && !isComplete && questions.length > 0) {
       const timer = setTimeout(() => {
         setTimeRemaining(timeRemaining - 1);
       }, 1000);
       return () => clearTimeout(timer);
-    } else if (timeRemaining === 0) {
+    } else if (timeRemaining === 0 && !isComplete) {
       setIsComplete(true);
     }
-  }, [timeRemaining, isComplete]);
+  }, [timeRemaining, isComplete, questions.length]);
 
   const handleRegionClick = (regionCode: string) => {
     if (!questions[currentIndex] || timeRemaining === 0) return;
@@ -91,6 +91,18 @@ export default function TimeAttackQuiz({ adminLevel, onBack }: TimeAttackQuizPro
   }
 
   const currentQuestion = questions[currentIndex];
+
+  // Safety check: if no question available, show loading
+  if (!currentQuestion) {
+    return (
+      <div className="flex items-center justify-center min-h-[500px]">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+          <p className="text-gray-600">문제 준비 중...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">
